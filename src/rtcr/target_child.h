@@ -28,7 +28,7 @@
 namespace Rtcr {
 	class Target_child;
 
-	constexpr bool child_verbose_debug = true;
+	constexpr bool child_verbose_debug = false;
 
 	// Forward declaration
 	class Restorer;

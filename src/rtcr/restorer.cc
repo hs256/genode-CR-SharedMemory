@@ -84,6 +84,7 @@ Genode::List<Ref_badge_info> Restorer::_create_region_map_dataspaces_list(
 
 void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Stored_pd_session_info> &stored_pd_sessions)
 {
+	Genode::log("in identify recreate pd sessions\n");
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
 	// There shall be only one PD session by now (created during bootstrap)
@@ -132,7 +133,7 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_pd_session->badge, pd_session->cap()));
-
+		Genode::log("rpcobject translations insert stored pd session badge ", stored_pd_session->badge, " and cap", pd_session->cap());		
 		// Remember the associations of the stored region maps and their dataspaces of the PD session to
 		// their corresponding new ones
 		// Address space
@@ -198,11 +199,11 @@ void Restorer::_recreate_signal_contexts(Pd_session_component &pd_session,
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// Warning: There are already signal sources in the PD session
-	if(pd_session.parent_state().signal_sources.first())
+	// Warning: There are already signal context in the PD session
+	if(pd_session.parent_state().signal_contexts.first())
 	{
 		Genode::warning("There are already signal contexts in the PD session ", pd_session.cap());
-		Signal_source_info *info = pd_session.parent_state().signal_sources.first();
+		Signal_context_info *info = pd_session.parent_state().signal_contexts.first();
 		while(info)
 		{
 			Genode::log(" ", *info);
@@ -235,10 +236,12 @@ void Restorer::_recreate_signal_contexts(Pd_session_component &pd_session,
 
 		// Associate the stored kcap address to this new RPC object
 		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_context->kcap, signal_context->cap, "Signal context"));
+		Genode::log("insert in kcap mappings", stored_signal_context->kcap, signal_context->cap, "Signal context");
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_signal_context->badge, signal_context->cap));
 
 		stored_signal_context = stored_signal_context->next();
+		//Genode::log("insert in kcap mappings next", stored_signal_context->kcap, signal_context->cap, "Signal context");
 	}
 }
 
@@ -686,9 +689,11 @@ void Restorer::_restore_state_cpu_sessions(Cpu_root &cpu_root, Genode::List<Stor
 			Genode::error("Could not find child RAM session for ckpt badge ", stored_cpu_session->badge);
 			throw Genode::Exception();
 		}
+		Genode::log("in restore state cpu session");
 
 		// Restore state
 		// sigh
+		Genode::log(Genode::Hex(stored_cpu_session->sigh_badge), "stored cpu session sigh badge");
 		if(stored_cpu_session->sigh_badge != 0)
 		{
 			// Restore sigh
@@ -699,7 +704,7 @@ void Restorer::_restore_state_cpu_sessions(Cpu_root &cpu_root, Genode::List<Stor
 			{
 				context = _find_child_object(stored_cpu_session->sigh_badge, pd_session->parent_state().signal_contexts);
 				if(context) break;
-
+				Genode::log(context->cap, context->ss_cap, context->imprint, "signal context being restored in cpu session\n");
 				pd_session = pd_session->next();
 			}
 			if(!context)
@@ -735,9 +740,11 @@ void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Ge
 			Genode::error("Could not find child CPU thread for ckpt badge ", stored_cpu_thread->badge);
 			throw Genode::Exception();
 		}
+		Genode::log("in resrore state cpu thread\n");
 
 		// Restore state
 		// sigh
+		Genode::log(Genode::Hex(stored_cpu_thread->sigh_badge), "stored cpu thread sigh badge");
 		if(stored_cpu_thread->sigh_badge != 0)
 		{
 			// Restore sigh
@@ -748,6 +755,7 @@ void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Ge
 			{
 				context = _find_child_object(stored_cpu_thread->sigh_badge, pd_session->parent_state().signal_contexts);
 				if(context) break;
+				Genode::log(context->cap, context->ss_cap, context->imprint, "signal context being restored in cpu thread\n");
 
 				pd_session = pd_session->next();
 			}
@@ -824,9 +832,11 @@ void Restorer::_restore_state_region_maps(Genode::List<Region_map_component> &re
 			Genode::error("Could not find child region map for ckpt badge ", stored_region_map->badge);
 			throw Genode::Exception();
 		}
+		Genode::log("in restore state region maps\n");
 
 		// Restore state
 		// sigh
+		Genode::log(Genode::Hex(stored_region_map->sigh_badge), "stored region map sigh badge\n");
 		if(stored_region_map->sigh_badge != 0)
 		{
 			// Restore sigh
@@ -838,6 +848,7 @@ void Restorer::_restore_state_region_maps(Genode::List<Region_map_component> &re
 				context = _find_child_object(stored_region_map->sigh_badge, pd_session->parent_state().signal_contexts);
 				if(context) break;
 
+				Genode::log(context->cap, context->ss_cap, context->imprint, "signal context being restored in region maps \n");
 				pd_session = pd_session->next();
 			}
 			if(!context)
@@ -961,6 +972,8 @@ void Restorer::_restore_state_timer_sessions(Timer_root &timer_root, Genode::Lis
 
 		// Restore state
 		// sigh
+		Genode::log("in restore state timer session");
+		Genode::log(Genode::Hex(stored_timer_session->sigh_badge), "stored timer session sigh badge\n");
 		if(stored_timer_session->sigh_badge != 0)
 		{
 			// Find Signal context info
@@ -1048,7 +1061,7 @@ void Restorer::_restore_cap_map()
 
 	//addr_t child_cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
 	addr_t cap_idx_alloc_addr = _state._cap_idx_alloc_addr;
-	//log("Cap_idx_alloc: child addr=", Hex(child_cap_idx_alloc_addr), ", state addr=", Hex(state_cap_idx_alloc_addr));
+	log("Cap_idx_alloc:", Hex(cap_idx_alloc_addr));
 
 	// Find attached region containing child's cap_idx_alloc struct (it contains the cap map of the child)
 	Attached_region_info *attached_region = nullptr;
@@ -1156,14 +1169,14 @@ void Restorer::_restore_cap_map()
 		for(unsigned cap_index = 0x200; cap_index < 0x280; ++cap_index)
 		{
 			addr_t const current_pos = local_state_array_start + cap_index*array_ele_size;
-			//log("offset=", Hex(offset), ": ", Hex(*(Genode::uint32_t*) current_pos));
+			log("starting cap index offset=", Hex(cap_index), ": ", Hex(*(Genode::uint32_t*) current_pos));
 			if(*(Genode::uint32_t*) current_pos)
 			{
 				starting_cap_index = cap_index;
 				break;
 			}
 		}
-		//log("previous: ", Hex(starting_cap_index));
+		log("previous: ", Hex(starting_cap_index));
 
 		// Use starting Cap_index to attach new Cap_indices to it
 		// previous Cap_index is the Cap_index to which the new Cap_index will point to
@@ -1171,6 +1184,7 @@ void Restorer::_restore_cap_map()
 		Kcap_cap_info *kcap_info = _kcap_mappings.first();
 		while(kcap_info)
 		{
+			log("looping in kcap info");
 			if(kcap_info->kcap == 0)
 			{
 				if(verbose_cap_map_debug)
@@ -1192,7 +1206,7 @@ void Restorer::_restore_cap_map()
 					throw Genode::Exception();
 				}
 
-				//log("previous cap index = ", Hex(previous_cap_index), ", current cap index = ", Hex(current_cap_index));
+				log("previous cap index = ", Hex(previous_cap_index), ", current cap index = ", Hex(current_cap_index));
 
 				// Current state: previous -> next
 				//log("Before:");
@@ -1230,13 +1244,16 @@ void Restorer::_restore_cap_map()
 				// previous Cap_index is changed to the newly created Cap_index
 				previous_cap_index = current_cap_index;
 			}
-
+			Genode::log("in restore cap map kcap=", Hex(kcap_info->kcap), ", ", kcap_info->cap, ", ", kcap_info->label.string());
 			kcap_info = kcap_info->next();
+			//Genode::log("in restore cap map next kcap=", Hex(kcap_info->kcap), ", ", kcap_info->cap, ", ", kcap_info->label.string());
+			//Genode::log(kcap_info->kcap, " capabilities to be  restored");
 		}
 	}
 
 	_state._env.rm().detach(local_state_ds_start);
 	_state._env.rm().detach(local_child_ds_start);
+	Genode::log("in the end of restore cap map");
 
 }
 
@@ -1260,6 +1277,8 @@ void Restorer::_restore_cap_space()
 		}
 
 		kcap_info = kcap_info->next();
+		//Genode::log(kcap_info->kcap, " capailities being restored");
+		Genode::log("in restore cap space kcap=", Genode::Hex(kcap_info->kcap), ", ", kcap_info->cap, ", ", kcap_info->label.string());
 	}
 }
 
@@ -1387,7 +1406,7 @@ void Restorer::restore()
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m()");
 
-	Genode::log("Before: \n", _child);
+	Genode::log("Before checkpointing: \n", _child);
 
 	// Create list of region maps
 	_region_maps = _create_region_map_dataspaces_list(_state._stored_pd_sessions, _state._stored_rm_sessions);
@@ -1521,13 +1540,14 @@ void Restorer::restore()
 	// Replace old badges with new in capability map
 	_restore_cap_map();
 
+	Genode::log("after restore cap map");
 	// Insert capabilities of all objects into capability space
 	_restore_cap_space();
 
 	// Copy stored dataspaces' content to child dataspaces' content
 	_restore_dataspaces();
 
-	Genode::log("After: \n", _child);
+	Genode::log("After checkpointing: \n", _child);
 
 	// Start threads
 	_start_threads(*_child.custom_services().cpu_root, _state._stored_cpu_sessions);

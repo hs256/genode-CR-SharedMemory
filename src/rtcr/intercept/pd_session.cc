@@ -168,14 +168,16 @@ Genode::Native_capability Pd_session_component::alloc_rpc_cap(Genode::Native_cap
 {
 	if(verbose_debug) Genode::log("Pd::\033[33m", "alloc_rpc_cap", "\033[0m(", ep, ")");
 
+	Genode::log("alloc_rpc_cap native capability", ep);
 	auto result_cap = _parent_pd.alloc_rpc_cap(ep);
 
 	// Create and insert list element to monitor this native_capability
 	Native_capability_info *new_nc_info = new (_md_alloc) Native_capability_info(result_cap, ep, _bootstrap_phase);
 	Genode::Lock::Guard guard(_parent_state.native_caps_lock);
 	_parent_state.native_caps.insert(new_nc_info);
+	Genode::log("alloc_rpc_cap native capability info", new_nc_info);
 
-	if(verbose_debug) Genode::log("  result: ", result_cap);
+	if(verbose_debug) Genode::log("  result:alloc_rpc_cap in Pd_session_component ", result_cap);
 
 	return result_cap;
 }
@@ -189,6 +191,7 @@ void Pd_session_component::free_rpc_cap(Genode::Native_capability cap)
 	Genode::Lock::Guard guard(_parent_state.native_caps_lock);
 	Native_capability_info *nc_info = _parent_state.native_caps.first();
 	if(nc_info) nc_info = nc_info->find_by_native_badge(cap.local_name());
+	Genode::log("free rpc capability if exists in pd session ",cap, "and native capability info", nc_info->cap); 
 
 	// List element found?
 	if(nc_info)

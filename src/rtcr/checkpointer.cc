@@ -49,7 +49,8 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	using Genode::addr_t;
 	using Genode::size_t;
 	using Genode::uint16_t;
-	const bool verbose_kcap_mappings_debug = false;
+	const bool verbose_kcap_mappings_debug = true;
+	log(" in create kcap mappings");
 
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 
@@ -98,6 +99,9 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 	if(verbose_kcap_mappings_debug)
 	{
+		log("struct size: 	 ", Hex(struct_size));
+		log("array_ele_size 	 ", Hex(array_ele_size));
+		log("arrey size 	 ", Hex(array_size));
 		log("child_ds_start:     ", Hex(child_ds_start));
 		log("child_struct_start: ", Hex(child_struct_start));
 		log("child_array_start:  ", Hex(child_array_start));
@@ -134,7 +138,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 			Kcap_badge_info *state_info = new (_alloc) Kcap_badge_info(kcap, badge);
 			result.insert(state_info);
 
-			if(verbose_kcap_mappings_debug) log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), ")");
+			if(verbose_kcap_mappings_debug) log("+ kcap addr", Hex(kcap), ": badge", badge, " (", Hex(badge), ")");
 		}
 	}
 

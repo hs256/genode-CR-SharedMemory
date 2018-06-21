@@ -22,7 +22,7 @@
 namespace Rtcr {
 	class Restorer;
 
-	constexpr bool restorer_verbose_debug = true;
+	constexpr bool restorer_verbose_debug = false;
 }
 
 class Rtcr::Restorer
