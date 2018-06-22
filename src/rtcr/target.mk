@@ -8,6 +8,7 @@ SRC_CC += main.cc \
           log_session.cc \
           rm_session.cc \
           timer_session.cc \
+	  irq_session.cc \
           target_child.cc
           
 LIBS   += base
@@ -19,3 +20,4 @@ vpath region_map_component.cc  $(PRG_DIR)/intercept
 vpath log_session.cc           $(PRG_DIR)/intercept
 vpath rm_session.cc            $(PRG_DIR)/intercept
 vpath timer_session.cc         $(PRG_DIR)/intercept
+vpath irq_session.cc           $(PRG_DIR)/intercept
