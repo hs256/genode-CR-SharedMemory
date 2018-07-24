@@ -16,6 +16,7 @@
 #include <cap_session/connection.h>
 #include <pd_session/connection.h>
 #include <region_map/client.h>
+#include <irq_session/connection.h>
 
 using namespace Genode;
 
@@ -57,6 +58,7 @@ private:
 	Genode::Parent_service    _log_service;
 	Genode::Parent_service    _rm_service;
 	Genode::Parent_service    _timer_service;
+	Genode::Parent_service    _irq_service;
 	Genode::Region_map_client _address_space { _resources.pd.address_space() };
 	Genode::Child             _child;
 
@@ -70,7 +72,7 @@ public:
 		_resources(label),
 		_initial_thread(_resources.cpu, _resources.pd, label),
 		_elf(label),
-		_log_service("LOG"), _rm_service("RM"), _timer_service("Timer"),
+		_log_service("LOG"), _rm_service("RM"), _timer_service("Timer"), _irq_service("Irq"),
 		_child(_elf.dataspace(), Genode::Dataspace_capability(),
 		       _resources.pd,  _resources.pd,
 		       _resources.ram, _resources.ram,
@@ -91,6 +93,7 @@ public:
 		return !Genode::strcmp(service, "LOG")   ? &_log_service
 		     : !Genode::strcmp(service, "RM")    ? &_rm_service
 		     : !Genode::strcmp(service, "Timer") ? &_timer_service
+		     : !Genode::strcmp(service, "Irq")   ? &_irq_service
 		     : 0;
 	}
 

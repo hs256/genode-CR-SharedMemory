@@ -196,5 +196,16 @@ void Target_state::print(Genode::Output &output) const
 			timer_info = timer_info->next();
 		}
 	}
+	// IRQ sessions
+	{
+		Genode::print(output, "IRQ sessions:\n");
+		Stored_irq_session_info const *irq_info = _stored_irq_sessions.first();
+		if(!irq_info) Genode::print(output, "<empty>\n");
+		while(irq_info)
+		{
+			Genode::print(output, " ", *irq_info, "\n");
+			irq_info = irq_info->next();
+		}
+	}
 }
 

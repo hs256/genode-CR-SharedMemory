@@ -19,7 +19,7 @@
 #include "offline_storage/stored_rm_session_info.h"
 #include "offline_storage/stored_rom_session_info.h"
 #include "offline_storage/stored_timer_session_info.h"
-
+#include "offline_storage/stored_irq_session_info.h"
 
 namespace Rtcr {
 	class Target_state;
@@ -45,6 +45,7 @@ private:
 	Genode::List<Stored_rm_session_info>    _stored_rm_sessions;
 	Genode::List<Stored_log_session_info>   _stored_log_sessions;
 	Genode::List<Stored_timer_session_info> _stored_timer_sessions;
+	Genode::List<Stored_irq_session_info> 	_stored_irq_sessions;
 
 	Genode::addr_t _cap_idx_alloc_addr;
 
