@@ -10,6 +10,7 @@ SRC_CC += main.cc \
           timer_session.cc \
           cpu_thread_component.cc \
           region_map_component.cc \
+	  irq_session.cc \
           target_child.cc \
           target_state.cc \
           checkpointer.cc \
@@ -28,6 +29,7 @@ vpath log_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath timer_session.cc         $(REP_DIR)/src/rtcr/intercept
 vpath cpu_thread_component.cc  $(REP_DIR)/src/rtcr/intercept
 vpath region_map_component.cc  $(REP_DIR)/src/rtcr/intercept
+vpath irq_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath target_child.cc          $(REP_DIR)/src/rtcr
 vpath target_state.cc          $(REP_DIR)/src/rtcr
 vpath checkpointer.cc          $(REP_DIR)/src/rtcr
