@@ -141,6 +141,9 @@ private:
 	void _prepare_timer_sessions(Genode::List<Stored_timer_session_info> &stored_infos, Genode::List<Timer_session_component> &child_infos);
 	void _destroy_stored_timer_session(Stored_timer_session_info &stored_info);
 
+	void _prepare_irq_sessions(Genode::List<Stored_irq_session_info> &stored_infos, Genode::List<Irq_session_component> &child_infos);
+	void _destroy_stored_irq_session(Stored_irq_session_info &stored_info);
+
 	Genode::List<Ref_badge_info> _create_region_map_dataspaces_list(
 			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Rm_session_component> *rm_sessions);
 
