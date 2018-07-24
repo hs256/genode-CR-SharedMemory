@@ -582,6 +582,36 @@ void Restorer::_recreate_timer_sessions(Timer_root &timer_root, Genode::List<Sto
 	}
 }
 
+void Restorer::_recreate_irq_sessions(Irq_root &irq_root, Genode::List<Stored_irq_session_info> &stored_irq_sessions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	// Warning: There are already Irq sessions
+	if(irq_root.session_infos().first())
+		Genode::warning("There are already Irq sessions created");
+
+	Irq_session_component *irq_session = nullptr;
+	Stored_irq_session_info *stored_irq_session = stored_irq_sessions.first();
+	while(stored_irq_session)
+	{
+		// Recreate
+		Genode::Rpc_in_buffer<160> creation_args(stored_irq_session->creation_args.string());
+		Genode::Session_capability irq_session_cap = irq_root.session(creation_args, Genode::Affinity());
+		irq_session = _child.custom_services().irq_root->session_infos().first();
+		if(irq_session) irq_session = irq_session->find_by_badge(irq_session_cap.local_name());
+		if(!irq_session)
+		{
+			Genode::error("Could not find newly created Irq session for ", irq_session_cap);
+			throw Genode::Exception();
+		}
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_irq_session->kcap, irq_session->cap(), "Irq session"));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_irq_session->badge, irq_session->cap()));
+
+		stored_irq_session = stored_irq_session->next();
+	}
+}
 
 void Restorer::_restore_state_pd_sessions(Pd_root &pd_root, Genode::List<Stored_pd_session_info> &stored_pd_sessions)
 {
@@ -958,7 +988,23 @@ void Restorer::_restore_state_log_sessions(Log_root &log_root, Genode::List<Stor
 	}
 }
 
+void Restorer::_restore_state_irq_sessions(Irq_root &irq_root, Genode::List<Stored_irq_session_info> &stored_irq_sessions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
+	Stored_irq_session_info *stored_irq_session = stored_irq_sessions.first();
+	while(stored_irq_session)
+	{
+		// Find corresponding child IRQ session
+		Irq_session_component *irq_session = _find_child_object(stored_irq_session->badge, irq_root.session_infos());
+
+		// Restore state
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_irq_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) irq_root.upgrade(irq_session->cap(), stored_irq_session->upgrade_args.string());
+
+		stored_irq_session = stored_irq_session->next();
+	}
+}
 void Restorer::_restore_state_timer_sessions(Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions,
 		Genode::List<Pd_session_component> &pd_sessions)
 {

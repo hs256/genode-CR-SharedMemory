@@ -118,6 +118,8 @@ private:
 
 	void _recreate_timer_sessions(
 			Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions);
+	void _recreate_irq_sessions(
+			Irq_root &irq_root, Genode::List<Stored_irq_session_info> &stored_irq_sessions);
 
 
 	/************************************
@@ -153,6 +155,8 @@ private:
 	void _restore_state_timer_sessions(
 			Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions,
 			Genode::List<Pd_session_component> &pd_sessions);
+	void _restore_state_irq_sessions(
+			Irq_root &irq_root, Genode::List<Stored_irq_session_info> &stored_irq_sessions);
 
 	template<typename RESTO>
 	RESTO *_find_child_object(Genode::uint16_t badge, Genode::List<RESTO> &child_objects)
