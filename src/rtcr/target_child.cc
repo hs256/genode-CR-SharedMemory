@@ -27,6 +27,9 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 
 	ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase);
 	ram_service = new (_md_alloc) Genode::Local_service("RAM", ram_root);
+
+	irq_root = new (_md_alloc) Irq_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
+	irq_service = new (_md_alloc) Genode::Local_service("Irq", irq_root);
 }
 
 Target_child::Custom_services::~Custom_services()
@@ -51,6 +54,9 @@ Target_child::Custom_services::~Custom_services()
 
 	if(pd_root)    Genode::destroy(_md_alloc, pd_root);
 	if(pd_service) Genode::destroy(_md_alloc, pd_service);
+
+	if(irq_root) Genode::destroy(_md_alloc, irq_root);
+	if(irq_service) Genode::destroy(_md_alloc, irq_service);
 }
 
 
@@ -94,6 +100,12 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 		if(!timer_service) timer_service = new (_md_alloc) Genode::Local_service("ROM", timer_root);
 		service = timer_service;
 	}
+	else if(!Genode::strcmp(service_name, "IRQ"))
+	{
+		service = irq_service;
+		if (!irq_root)	irq_root = new (_md_alloc) Irq_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
+		if (!irq_service) 	irq_service = new (_md_alloc) Genode::Local_service("Irq", irq_root);
+	}
 
 	return service;
 }
@@ -105,6 +117,7 @@ Target_child::Resources::Resources(Genode::Env &env, const char *label, Custom_s
 	pd  (init_pd(label, *custom_services.pd_root)),
 	cpu (init_cpu(label, *custom_services.cpu_root)),
 	ram (init_ram(label, *custom_services.ram_root)),
+	irq (init_irq(label, *custom_services.irq_root)),
 	rom (env, label)
 {
 	// Donate ram quota to child
@@ -190,6 +203,27 @@ Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_
 }
 
 
+Irq_session_component &Target_child::Resources::init_irq(const char *label, Irq_root &irq_root)
+{
+	// Preparing argument string
+	char args_buf[160];
+	Genode::snprintf(args_buf, sizeof(args_buf), "ram_quota=%u, label=\"%s\"", 20*1024*sizeof(long), label);
+
+	// Issuing session method of Irq_root
+	Genode::Session_capability irq_cap = irq_root.session(args_buf, Genode::Affinity());
+
+	// Find created RPC object in Irq_root's list
+	Irq_session_component *irq_session = irq_root.session_infos().first();
+	if(irq_session) irq_session = irq_session->find_by_badge(irq_cap.local_name());
+	if(!irq_session)
+	{
+		Genode::error("Creating custom Irq session failed: Could not find irq session in irq root");
+		throw Genode::Exception();
+	}
+
+	return *irq_session;
+}
+
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
 :
@@ -235,7 +269,8 @@ void Target_child::start()
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this,
 			*_custom_services.pd_service,
 			*_custom_services.ram_service,
-			*_custom_services.cpu_service);
+			*_custom_services.cpu_service,
+			*_custom_services.irq_service);
 
 
 }
@@ -254,7 +289,8 @@ void Target_child::start(Restorer &restorer)
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this,
 			*_custom_services.pd_service,
 			*_custom_services.ram_service,
-			*_custom_services.cpu_service);
+			*_custom_services.cpu_service,
+			*_custom_services.irq_service);
 
 	//enter_kdebug("before restore");
 
@@ -433,6 +469,27 @@ void Target_child::print(Genode::Output &output) const
 			}
 
 			cpu_session = cpu_session->next();
+		}
+	}
+	// IRQ session
+	{
+		print(output, "Irq Sessions:\n");
+		Irq_session_component const *irq_session = _custom_services.irq_root->session_infos().first();
+		if(!irq_session) print(output, " <empty>\n");
+		while(irq_session)
+		{
+			print(output, " ", irq_session->cap(), " ", irq_session->parent_state(), "\n");
+
+			/*Cpu_thread_component const *cpu_thread = cpu_session->parent_state().cpu_threads.first();
+			if(!cpu_thread) print(output, "  <empty>\n");
+			while(cpu_thread)
+			{
+				print(output, "  ", cpu_thread->cap(), " ", cpu_thread->parent_state(), "\n");
+
+				cpu_thread = cpu_thread->next();
+			}*/
+
+			irq_session = irq_session->next();
 		}
 	}
 	// RAM session

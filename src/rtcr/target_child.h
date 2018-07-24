@@ -23,6 +23,7 @@
 #include "intercept/log_session.h"
 #include "intercept/rom_session.h"
 #include "intercept/timer_session.h"
+#include "intercept/irq_session.h"
 #include "target_state.h"
 
 namespace Rtcr {
@@ -111,6 +112,9 @@ private:
 		Timer_root *timer_root  = nullptr;
 		Genode::Local_service *timer_service = nullptr;
 
+		Irq_root *irq_root = nullptr;
+		Genode::Local_service *irq_service = nullptr;
+
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 				Genode::size_t granularity, bool &bootstrap_phase);
 		~Custom_services();
@@ -137,6 +141,10 @@ private:
 		/**
 		 * Parent's ROM session
 		 */
+		Irq_session_component  &irq;
+		/**
+		* Custom IRQ RPC object
+		*/
 		Genode::Rom_connection  rom;
 
 		Resources(Genode::Env &env, const char *label, Custom_services &custom_services);
@@ -145,6 +153,7 @@ private:
 		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);
 		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root);
 		Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
+		Irq_session_component &init_irq(const char *label, Irq_root &irq_root);
 	} _resources;
 
 	/**
@@ -191,6 +200,10 @@ public:
 	 * Return the custom Ram session
 	 */
 	Ram_session_component &ram() { return _resources.ram; }
+	/**
+	* Return the custom IRQ session
+	*/
+	Irq_session_component &irq() { return _resources.irq; }
 	/**
 	 * Return the struct of custom services
 	 */
